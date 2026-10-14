@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="theme-color" content="#1B0F0C" />
+  <meta name="robots" content="noindex" />
+  <title>Painel · Adriano Lanches</title>
+  <link rel="icon" href="https://imvzfueqnpkcrxumiqwz.supabase.co/storage/v1/object/public/produto-fotos/adriano-lanches/logo.webp" type="image/webp" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Anton&family=Courier+Prime:wght@400;700&family=Rubik:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+  <!-- LOGIN -->
+  <section class="login" id="login">
+    <img src="https://imvzfueqnpkcrxumiqwz.supabase.co/storage/v1/object/public/produto-fotos/adriano-lanches/logo.webp" alt="Adriano Lanches" width="96" height="96" />
+    <h1>Painel</h1>
+    <p>Digite o PIN da loja</p>
+    <div class="pin-dots" id="pinDots"><i></i><i></i><i></i><i></i></div>
+    <p class="pin-err" id="pinErr"></p>
+    <div class="pinpad" id="pinpad">
+      <button>1</button><button>2</button><button>3</button>
+      <button>4</button><button>5</button><button>6</button>
+      <button>7</button><button>8</button><button>9</button>
+      <button class="ghost" data-k="clear">limpar</button><button>0</button><button class="ghost" data-k="back">⌫</button>
+    </div>
+  </section>
+
+  <!-- APP -->
+  <div class="app" id="app" hidden>
+    <header class="bar">
+      <img src="https://imvzfueqnpkcrxumiqwz.supabase.co/storage/v1/object/public/produto-fotos/adriano-lanches/logo.webp" alt="" width="44" height="44" class="bar-logo" />
+      <nav class="bar-tabs">
+        <button class="on" data-view="pedidos">Pedidos <b id="badgeNovos" hidden>0</b></button>
+        <button data-view="cardapio">Cardápio</button>
+        <button data-view="loja">Loja</button>
+      </nav>
+      <div class="bar-right">
+        <div class="modo" id="modo">
+          <button data-modo="auto">Auto</button><button data-modo="aberta">Aberta</button><button data-modo="fechada">Fechada</button>
+        </div>
+        <button class="icon" id="soundBtn" title="Som de novo pedido">🔔</button>
+        <button class="icon" id="logoutBtn" title="Sair">⎋</button>
+      </div>
+    </header>
+
+    <!-- PEDIDOS -->
+    <section class="view" id="view-pedidos">
+      <div class="stats">
+        <div class="stat"><span>Faturamento</span><b id="stFat">R$ 0</b></div>
+        <div class="stat"><span>Pedidos</span><b id="stQtd">0</b></div>
+        <div class="stat"><span>Ticket médio</span><b id="stTicket">R$ 0</b></div>
+        <div class="stat hot"><span>Vendido por sugestões</span><b id="stUp">R$ 0</b><small id="stUpPct"></small></div>
+        <div class="period" id="period">
+          <button class="on" data-p="hoje">Hoje</button><button data-p="ontem">Ontem</button><button data-p="7d">7 dias</button>
+        </div>
+      </div>
+      <div class="board" id="board">
+        <div class="col" data-col="novo"><h2>Novos <span id="cnt-novo">0</span></h2><div class="col-list" id="col-novo"></div></div>
+        <div class="col" data-col="preparo"><h2>Na chapa <span id="cnt-preparo">0</span></h2><div class="col-list" id="col-preparo"></div></div>
+        <div class="col" data-col="pronto"><h2>Pronto · Saiu <span id="cnt-pronto">0</span></h2><div class="col-list" id="col-pronto"></div></div>
+        <div class="col" data-col="finalizado"><h2>Finalizados <span id="cnt-finalizado">0</span></h2><div class="col-list" id="col-finalizado"></div></div>
+      </div>
+    </section>
+
+    <!-- CARDÁPIO (admin) -->
+    <section class="view" id="view-cardapio" hidden>
+      <div class="adm-head">
+        <div><h2>Cardápio</h2><p>Mudou aqui, mudou no cardápio do cliente na hora.</p></div>
+        <div class="adm-actions">
+          <input class="field" id="admSearch" placeholder="Buscar produto…" />
+          <button class="btn" id="newProdBtn">+ Novo produto</button>
+        </div>
+      </div>
+      <div id="admList"></div>
+    </section>
+
+    <!-- LOJA -->
+    <section class="view" id="view-loja" hidden>
+      <div class="adm-head"><div><h2>Loja</h2><p>Taxas, horário e pagamento.</p></div></div>
+      <form class="loja-form" id="lojaForm"></form>
+    </section>
+  </div>
+
+  <!-- MODAL -->
+  <div class="modal-scrim" id="modalScrim"></div>
+  <div class="modal" id="modal"></div>
+
+  <!-- IMPRESSÃO -->
+  <div id="printArea"></div>
+  <div class="toast" id="toast"></div>
+  <input type="file" id="fileInput" accept="image/jpeg,image/png,image/webp" hidden />
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+  <script src="config.js"></script>
+  <script src="painel.js"></script>
+  <script src="admin.js"></script>
+</body>
+</html>
