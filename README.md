@@ -12,8 +12,10 @@ HTML, CSS e JavaScript puros, sem build. O backend é o Supabase (projeto CARDAP
 | `style.css` | Visual do painel e cupom de impressão 80mm |
 | `painel.js` | Login, pedidos em tempo real, som, status, impressão, resumo do dia |
 | `admin.js` | Produtos (preço, esgotado, destaque, foto, turbinar) e configurações da loja |
+| `clientes.js` | Base de clientes (criada a cada pedido), busca e exportação para planilha |
 | `config.js` | URL e chave pública do Supabase, slug da loja, e-mail do usuário do painel |
 | `supabase/migrations/001_initial.sql` | Tabelas, RLS, funções `criar_pedido`, `status_pedido`, `vitrine_social`, Realtime e Storage |
+| `supabase/migrations/002_clientes_pix.sql` | Tabela `clientes`, view `clientes_resumo`, campos de pagamento PIX e função `informar_pix` |
 | `supabase/seed.sql` | Loja Adriano Lanches, 3 categorias e 51 produtos |
 
 ## Acesso
@@ -21,6 +23,14 @@ HTML, CSS e JavaScript puros, sem build. O backend é o Supabase (projeto CARDAP
 - O dono digita só o PIN. O login real no Supabase usa o usuário `PAINEL_EMAIL`, com senha `PIN_PREFIX + PIN`.
 - O usuário precisa estar em `loja_membros` para ler pedidos e editar a loja (regras RLS).
 - Nunca coloque a `service_role` key no código: o painel roda no navegador.
+
+## Clientes
+
+Todo pedido cria ou atualiza o cliente pelo telefone (só dígitos) dentro da loja. A aba **Clientes** mostra pedidos, total gasto, ticket médio e último pedido, marca quem é **Fiel** (3+ pedidos) ou **Sumido** (30+ dias) e exporta tudo em CSV.
+
+## PIX
+
+Sem gateway e sem taxa: com a chave PIX preenchida na aba Loja, o cardápio gera o código copia e cola com o valor exato do pedido. Quando o cliente toca em "Já paguei", o ticket fica amarelo no painel. O dono confere no banco e toca em **Confirmar**, e o cliente vê a confirmação na tela dele.
 
 ## Banco multi-loja
 

@@ -159,7 +159,7 @@ function renderLojaForm() {
     <div class="lf"><label>Tempo de entrega</label><input class="field" name="tempo_entrega" value="${esc(c.tempo_entrega || '')}" placeholder="40-60 min"></div>
     <div class="lf"><label>Tempo de retirada</label><input class="field" name="tempo_retirada" value="${esc(c.tempo_retirada || '')}" placeholder="20-30 min"></div>
     <div class="lf"><label>WhatsApp da loja</label><input class="field" name="whatsapp" value="${esc(c.whatsapp || '')}" placeholder="44999999999"></div>
-    <div class="lf"><label>Chave PIX</label><input class="field" name="chave_pix" value="${esc(c.chave_pix || '')}" placeholder="CNPJ, celular, e-mail…"></div>
+    <div class="lf"><label>Chave PIX</label><input class="field" name="chave_pix" value="${esc(c.chave_pix || '')}" placeholder="celular com +55, CPF, CNPJ, e-mail ou aleatória"><small>Com a chave preenchida, o cliente que escolhe PIX recebe QR Code e copia e cola com o valor do pedido.</small></div>
     <div class="lf" style="grid-column:1/-1"><label>Endereço (retirada)</label><input class="field" name="endereco" value="${esc(c.endereco || '')}"></div>
     <div class="lf-actions"><button class="btn" type="submit">Salvar configurações</button></div>`;
 }

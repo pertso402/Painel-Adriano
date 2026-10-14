@@ -35,6 +35,7 @@
       <img src="https://imvzfueqnpkcrxumiqwz.supabase.co/storage/v1/object/public/produto-fotos/adriano-lanches/logo.webp" alt="" width="44" height="44" class="bar-logo" />
       <nav class="bar-tabs">
         <button class="on" data-view="pedidos">Pedidos <b id="badgeNovos" hidden>0</b></button>
+        <button data-view="clientes">Clientes</button>
         <button data-view="cardapio">Cardápio</button>
         <button data-view="loja">Loja</button>
       </nav>
@@ -64,6 +65,18 @@
         <div class="col" data-col="pronto"><h2>Pronto · Saiu <span id="cnt-pronto">0</span></h2><div class="col-list" id="col-pronto"></div></div>
         <div class="col" data-col="finalizado"><h2>Finalizados <span id="cnt-finalizado">0</span></h2><div class="col-list" id="col-finalizado"></div></div>
       </div>
+    </section>
+
+    <!-- CLIENTES -->
+    <section class="view" id="view-clientes" hidden>
+      <div class="adm-head">
+        <div><h2>Clientes</h2><p id="cliResumo">Todo mundo que já pediu, salvo automático pelo telefone.</p></div>
+        <div class="adm-actions">
+          <input class="field" id="cliSearch" placeholder="Buscar nome, telefone ou bairro…" />
+          <button class="btn ghost" id="cliCsv">Exportar planilha</button>
+        </div>
+      </div>
+      <div class="cli-table-wrap"><table class="cli-table" id="cliTable"></table></div>
     </section>
 
     <!-- CARDÁPIO (admin) -->
@@ -98,5 +111,6 @@
   <script src="config.js"></script>
   <script src="painel.js"></script>
   <script src="admin.js"></script>
+  <script src="clientes.js"></script>
 </body>
 </html>

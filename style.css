@@ -104,6 +104,25 @@ input, select, textarea { font: inherit; color: inherit; }
 .tk.cancel { opacity: .5; }
 .tk.cancel .tk-num { text-decoration: line-through; }
 
+.tk-pix { display: flex; align-items: center; justify-content: space-between; gap: 8px; font-family: var(--f-body); font-size: .78rem; font-weight: 700; background: #EEF6FF; color: #1F4E8C; border-radius: 8px; padding: 6px 6px 6px 10px; margin-bottom: 8px; }
+.tk-pix.warn { background: var(--yellow); color: var(--ink); animation: pulse 1.4s infinite; }
+.tk-pix.ok { background: #E3F6EA; color: var(--green); padding: 8px 10px; }
+.tk-pix button { background: var(--ink); color: #fff; border-radius: 7px; padding: 6px 9px; font-size: .75rem; font-weight: 800; }
+
+/* ── CLIENTES ── */
+.cli-table-wrap { overflow-x: auto; border-radius: 16px; background: var(--board-2); }
+.cli-table { width: 100%; border-collapse: collapse; font-size: .9rem; min-width: 760px; }
+.cli-table th { text-align: left; font-size: .7rem; text-transform: uppercase; letter-spacing: .07em; color: var(--ink-3); padding: 12px 14px; border-bottom: 1px solid rgba(255,255,255,.08); cursor: pointer; white-space: nowrap; }
+.cli-table th.on { color: var(--yellow); }
+.cli-table td { padding: 11px 14px; border-bottom: 1px solid rgba(255,255,255,.05); vertical-align: top; }
+.cli-table tr:last-child td { border-bottom: 0; }
+.cli-table td b { display: block; }
+.cli-table td small { color: var(--ink-3); }
+.cli-table a { color: #5BD58A; text-decoration: none; font-weight: 700; }
+.cli-badge { display: inline-block; font-size: .65rem; font-weight: 800; text-transform: uppercase; padding: 2px 7px; border-radius: 6px; background: var(--yellow); color: var(--ink); margin-left: 6px; vertical-align: 2px; }
+.cli-badge.sumido { background: #4a3a35; color: #fff; }
+.num { font-family: var(--f-display); font-size: 1.15rem; letter-spacing: .02em; }
+
 /* ── ADMIN ── */
 .adm-head { display: flex; justify-content: space-between; align-items: end; gap: 16px; flex-wrap: wrap; margin-bottom: 16px; }
 .adm-head h2 { font-family: var(--f-display); font-weight: 400; font-size: 2.2rem; text-transform: uppercase; line-height: 1; }

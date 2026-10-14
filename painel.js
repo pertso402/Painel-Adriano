@@ -57,6 +57,7 @@ async function enter() {
   await loadPedidos();
   subscribe();
   initAdmin();
+  initClientes();
   setInterval(renderBoard, 30000); // atualiza "há X min"
 }
 $('logoutBtn').onclick = async () => { await supa.auth.signOut(); location.reload(); };
@@ -142,6 +143,18 @@ function nextAction(p) {
 const payLabel = { pix: 'PIX', dinheiro: 'Dinheiro', cartao: 'Cartão' };
 function waLink(tel) { const d = (tel || '').replace(/\D/g, ''); return 'https://wa.me/' + (d.length <= 11 ? '55' + d : d); }
 
+function pixLine(p) {
+  if (p.forma_pagamento !== 'pix' || p.status === 'cancelado') return '';
+  if (p.pago) return '<div class="tk-pix ok">⚡ PIX confirmado</div>';
+  return `<div class="tk-pix ${p.pix_informado_em ? 'warn' : ''}">${p.pix_informado_em ? '⚡ Cliente diz que pagou: confira no banco' : '⚡ PIX: aguardando pagamento'}<button onclick="confirmarPix('${p.id}')">Confirmar</button></div>`;
+}
+async function confirmarPix(id) {
+  const p = PEDIDOS.get(id); if (!p) return;
+  p.pago = true; p.pago_em = new Date().toISOString(); renderBoard();
+  const { error } = await supa.from('pedidos').update({ pago: true, pago_em: p.pago_em }).eq('id', id);
+  if (error) { p.pago = false; renderBoard(); return toast('Não salvou: ' + error.message); }
+  toast('PIX confirmado ✓');
+}
 function ticketHTML(p) {
   const act = nextAction(p);
   const late = p.status === 'novo' && Date.now() - new Date(p.created_at) > 10 * 60000;
@@ -153,7 +166,8 @@ function ticketHTML(p) {
     ${end ? `<div class="tk-end">📍 ${end}</div>` : ''}
     <div class="tk-items">${(p.itens_pedido || []).map(i => `<div class="tk-item"><b>${i.quantidade}x</b><span>${esc(i.produto_nome)}${i.origem === 'upgrade' ? '<span class="tk-up">turbinado</span>' : ''}${['upsell', 'bump'].includes(i.origem) ? '<span class="tk-up">sugestão</span>' : ''}</span></div>${i.observacao ? `<span class="tk-obs">↳ ${esc(i.observacao)}</span>` : ''}`).join('')}</div>
     ${p.observacoes ? `<div class="tk-note">📝 ${esc(p.observacoes)}</div>` : ''}
-    <div class="tk-pay"><span>${payLabel[p.forma_pagamento]}${p.troco_para ? ` · troco p/ ${fmt(p.troco_para)}` : ''}${Number(p.taxa_entrega) ? ` · entrega ${fmt(p.taxa_entrega)}` : ''}</span><span class="tk-total">${fmt(p.total)}</span></div>
+    ${pixLine(p)}
+    <div class="tk-pay"><span>${payLabel[p.forma_pagamento]}${p.pago ? ' ✓ pago' : ''}${p.troco_para ? ` · troco p/ ${fmt(p.troco_para)}` : ''}${Number(p.taxa_entrega) ? ` · entrega ${fmt(p.taxa_entrega)}` : ''}</span><span class="tk-total">${fmt(p.total)}</span></div>
     ${p.status !== 'cancelado' ? `<div class="tk-actions">
       ${act ? `<button class="tk-go ${act.cls}" onclick="setStatus('${p.id}','${act.to}')">${act.label}</button>` : '<span></span>'}
       <button class="tk-sm" onclick="printPedido('${p.id}')" title="Imprimir">🖨</button>
@@ -210,6 +224,7 @@ function subscribe() {
     })
     .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'pedidos', filter: `loja_id=eq.${LOJA.id}` }, ({ new: row }) => {
       const p = PEDIDOS.get(row.id);
+      if (p && !p.pix_informado_em && row.pix_informado_em) toast(`⚡ Pedido #${String(row.numero).padStart(3, '0')}: cliente avisou que pagou o PIX`);
       if (p) Object.assign(p, row); else PEDIDOS.set(row.id, { ...row, itens_pedido: [] });
       renderBoard(); renderStats();
     })
@@ -272,4 +287,4 @@ function printPedido(id) {
   if (data.session) await enter();
 })();
 
-Object.assign(window, { setStatus, cancelPedido, printPedido });
+Object.assign(window, { setStatus, cancelPedido, printPedido, confirmarPix });
