@@ -18,6 +18,7 @@ HTML, CSS e JavaScript puros, sem build. O backend é o Supabase (projeto CARDAP
 | `supabase/migrations/002_clientes_pix.sql` | Tabela `clientes`, view `clientes_resumo`, campos de pagamento PIX e função `informar_pix` |
 | `supabase/migrations/003_adicionais_cardapio_oficial.sql` | Tabela `adicionais`, adicionais no `criar_pedido` e o cardápio oficial (preços, vegetarianos, molho, cervejas) |
 | `supabase/migrations/004_comprovante_distancia.sql` | Comprovante PIX anexado (bucket privado `comprovantes`), taxa por raio e `distancia_km` |
+| `supabase/migrations/005_distancia_caminho_carro.sql` | `calcular_entrega`: taxa pelo caminho de carro (rota OSRM) com checagem no banco |
 | `supabase/seed.sql` | Carga inicial (antiga, da planilha). O cardápio atual vem da migration 003 |
 
 ## Acesso
@@ -40,7 +41,7 @@ Sem gateway e sem taxa. O cliente paga pelo QR (valor exato), anexa o print do c
 
 ## Taxa por distância
 
-Até `entrega_raio_km` (4 km) cobra `taxa_entrega` (R$ 8); acima, `taxa_entrega_longe` (R$ 12). A distância é em linha reta, pelo GPS do cliente (preciso) ou pelo endereço no OpenStreetMap (aproximado). O banco recalcula no `criar_pedido`. O ticket mostra a distância e o link do mapa; sem posição, cobra a taxa base e avisa "distância não conferida".
+Até `entrega_raio_km` (4 km) cobra `taxa_entrega` (R$ 8); acima, `taxa_entrega_longe` (R$ 12). A distância é o **caminho de carro** (rota do OSRM, gratuito, da loja até o cliente), a partir do GPS do cliente ou do endereço digitado. O banco (`calcular_entrega`) só aceita uma rota coerente com a linha reta; sem rota, estima linha reta × 1,5 e marca "estimado". O ticket mostra a distância e o link do mapa; sem posição, cobra a taxa base e avisa "distância não conferida".
 
 ## Banco multi-loja
 

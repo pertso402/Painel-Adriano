@@ -219,7 +219,7 @@ function renderLojaForm() {
   const h = c.horario || {};
   $('lojaForm').innerHTML = `
     <div class="lf"><label>Taxa de entrega (R$)</label><input class="field" name="taxa_entrega" type="number" step="0.5" min="0" value="${c.taxa_entrega ?? ''}"><small>Vale até o raio abaixo.</small></div>
-    <div class="lf"><label>Raio da taxa normal (km)</label><input class="field" name="entrega_raio_km" type="number" step="0.5" min="0" value="${c.entrega_raio_km ?? ''}" placeholder="vazio = taxa única"></div>
+    <div class="lf"><label>Raio da taxa normal (km de carro)</label><input class="field" name="entrega_raio_km" type="number" step="0.5" min="0" value="${c.entrega_raio_km ?? ''}" placeholder="vazio = taxa única"></div>
     <div class="lf"><label>Taxa acima do raio (R$)</label><input class="field" name="taxa_entrega_longe" type="number" step="0.5" min="0" value="${c.taxa_entrega_longe ?? ''}"></div>
     <div class="lf"><label>Posição da loja no mapa</label><input class="field" id="lojaPos" readonly value="${c.loja_lat != null ? `${c.loja_lat}, ${c.loja_lng}` : 'não definida'}"><small><a href="#" onclick="event.preventDefault();localizarLoja()" style="color:var(--yellow)">Atualizar pelo endereço da loja</a> · <a href="${c.loja_lat != null ? `https://www.google.com/maps/search/?api=1&query=${c.loja_lat},${c.loja_lng}` : '#'}" target="_blank" rel="noopener" style="color:var(--yellow)">conferir no mapa</a></small></div>
     <div class="lf"><label>Frete grátis acima de (R$)</label><input class="field" name="frete_gratis_acima" type="number" step="1" min="0" value="${c.frete_gratis_acima ?? ''}" placeholder="vazio = sem frete grátis"><small>Liga a barra "faltam R$ X pro frete grátis" no cardápio.</small></div>

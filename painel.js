@@ -159,7 +159,7 @@ function pixLine(p) {
 function kmLine(p) {
   const e = p.endereco || {};
   const mapa = e.lat != null ? `https://www.google.com/maps/search/?api=1&query=${e.lat},${e.lng}` : `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${e.rua}, ${e.numero}, ${e.bairro}, ${(LOJA.config?.endereco || '').split(',').pop()}`)}`;
-  const km = p.distancia_km != null ? `${String(Number(p.distancia_km)).replace('.', ',')} km${e.fonte === 'gps' ? ' (GPS)' : ' (aprox.)'}` : '<span class="warn">distância não conferida</span>';
+  const km = p.distancia_km != null ? `${String(Number(p.distancia_km)).replace('.', ',')} km de carro (${e.rota_fonte === 'estimado' ? 'estimado' : e.fonte === 'gps' ? 'GPS' : 'endereço'})` : '<span class="warn">distância não conferida</span>';
   return `<div class="tk-km">${km} · <a href="${mapa}" target="_blank" rel="noopener">ver no mapa</a></div>`;
 }
 // foto do comprovante (bucket privado → link temporário)
@@ -323,7 +323,7 @@ function printPedido(id) {
     <div class="c">${new Date(p.created_at).toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' })}</div>
     <hr><div class="c big">PEDIDO #${String(p.numero).padStart(3, '0')} · ${p.tipo_entrega === 'retirada' ? 'RETIRADA' : 'ENTREGA'}</div><hr>
     <div>${esc(p.cliente_nome)} · ${esc(p.cliente_telefone)}</div>
-    ${e ? `<div>${esc(e.rua)}, ${esc(e.numero)} - ${esc(e.bairro)}${e.complemento ? '<br>' + esc(e.complemento) : ''}${p.distancia_km != null ? `<br>${String(Number(p.distancia_km)).replace('.', ',')} km da loja` : ''}</div>` : ''}
+    ${e ? `<div>${esc(e.rua)}, ${esc(e.numero)} - ${esc(e.bairro)}${e.complemento ? '<br>' + esc(e.complemento) : ''}${p.distancia_km != null ? `<br>${String(Number(p.distancia_km)).replace('.', ',')} km de carro` : ''}</div>` : ''}
     <hr>
     ${(p.itens_pedido || []).map(i => `<div class="r"><span>${i.quantidade}x ${esc(i.produto_nome)}</span><span>${fmt(i.subtotal)}</span></div>${i.adicionais?.length ? `<div class="obs">${esc((i.adicionais || []).map(x => '+ ' + x.nome).join(', '))}</div>` : ''}${i.observacao ? `<div class="obs">* ${esc(i.observacao)}</div>` : ''}`).join('')}
     ${p.observacoes ? `<hr><div class="obs">OBS: ${esc(p.observacoes)}</div>` : ''}
