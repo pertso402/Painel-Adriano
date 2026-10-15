@@ -4,7 +4,7 @@
 // ═══════════════════════════════════════════════════════════
 'use strict';
 
-let CATS = [], PRODS = [];
+let CATS = [], PRODS = [], ADDS = [];
 let admQuery = '';
 
 async function initAdmin() {
@@ -12,14 +12,16 @@ async function initAdmin() {
   renderLojaForm();
   supa.channel('admin-' + LOJA.id)
     .on('postgres_changes', { event: '*', schema: 'public', table: 'produtos', filter: `loja_id=eq.${LOJA.id}` }, () => loadAdmin())
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'adicionais', filter: `loja_id=eq.${LOJA.id}` }, () => loadAdmin())
     .subscribe();
 }
 async function loadAdmin() {
-  const [{ data: c }, { data: p }] = await Promise.all([
+  const [{ data: c }, { data: p }, { data: a }] = await Promise.all([
     supa.from('categorias').select('*').eq('loja_id', LOJA.id).order('ordem'),
     supa.from('produtos').select('*').eq('loja_id', LOJA.id).order('ordem'),
+    supa.from('adicionais').select('*').eq('loja_id', LOJA.id).order('ordem'),
   ]);
-  CATS = c || []; PRODS = p || [];
+  CATS = c || []; PRODS = p || []; ADDS = a || [];
   renderAdmin();
 }
 
@@ -40,7 +42,39 @@ function renderAdmin() {
         <button class="edit edit-col" onclick="openProd('${p.id}')">Editar</button>
       </div>`).join('')}
     </div>`;
-  }).join('');
+  }).join('') + (q ? '' : addsHTML());
+}
+// ── Adicionais (vão dentro do lanche, pagos à parte) ───────
+function addsHTML() {
+  return `<div class="adm-cat">
+    <div class="adm-cat-head"><h3>Adicionais</h3><span>${ADDS.length} · aparecem na tela de cada lanche</span><button class="edit" style="margin-left:auto" onclick="newAdd()">+ Novo adicional</button></div>
+    ${ADDS.map(x => `<div class="adm-row ${x.disponivel ? '' : 'off'}" style="grid-template-columns:1fr 128px auto auto">
+      <div class="adm-name"><b>${esc(x.nome)}</b></div>
+      <label class="adm-price">R$<input type="number" step="0.5" min="0" value="${Number(x.preco).toFixed(2)}" onchange="updateAdd('${x.id}', { preco: Number(this.value) }, 'Preço do adicional atualizado')"></label>
+      <button class="toggle ${x.disponivel ? 'on' : ''}" onclick="updateAdd('${x.id}', { disponivel: ${!x.disponivel} }, '${x.disponivel ? 'Adicional pausado' : 'Adicional de volta'}')"><i></i>${x.disponivel ? 'Disponível' : 'Em falta'}</button>
+      <button class="edit" onclick="deleteAdd('${x.id}')" title="Excluir">✕</button>
+    </div>`).join('')}
+  </div>`;
+}
+async function updateAdd(id, patch, msg) {
+  const { error } = await supa.from('adicionais').update(patch).eq('id', id);
+  if (error) return toast('Erro: ' + error.message);
+  Object.assign(ADDS.find(x => x.id === id), patch); renderAdmin(); toast(msg);
+}
+async function newAdd() {
+  const nome = (prompt('Nome do adicional (ex.: Picles)') || '').trim(); if (!nome) return;
+  const preco = Number(String(prompt('Preço (R$)', '5') || '').replace(',', '.'));
+  if (!(preco >= 0)) return toast('Preço inválido');
+  const { error } = await supa.from('adicionais').insert({ loja_id: LOJA.id, nome, preco, ordem: Math.max(0, ...ADDS.map(x => x.ordem)) + 1 });
+  if (error) return toast('Erro: ' + error.message);
+  toast('Adicional criado'); loadAdmin();
+}
+async function deleteAdd(id) {
+  const x = ADDS.find(a => a.id === id);
+  if (!confirm(`Excluir o adicional "${x.nome}"?`)) return;
+  const { error } = await supa.from('adicionais').delete().eq('id', id);
+  if (error) return toast('Erro: ' + error.message);
+  toast('Adicional excluído'); loadAdmin();
 }
 $('admSearch').oninput = e => { admQuery = e.target.value; renderAdmin(); };
 $('newProdBtn').onclick = () => openProd(null);
@@ -183,4 +217,4 @@ $('lojaForm').onsubmit = async e => {
   LOJA.config = config; toast('Configurações salvas ✓');
 };
 
-Object.assign(window, { initAdmin, pickPhoto, savePrice, toggleDisp, toggleDest, openProd, saveProd, deleteProd, closeModal, renderLojaForm });
+Object.assign(window, { updateAdd, newAdd, deleteAdd, initAdmin, pickPhoto, savePrice, toggleDisp, toggleDest, openProd, saveProd, deleteProd, closeModal, renderLojaForm });

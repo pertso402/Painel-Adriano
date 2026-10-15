@@ -16,13 +16,18 @@ HTML, CSS e JavaScript puros, sem build. O backend é o Supabase (projeto CARDAP
 | `config.js` | URL e chave pública do Supabase, slug da loja, e-mail do usuário do painel |
 | `supabase/migrations/001_initial.sql` | Tabelas, RLS, funções `criar_pedido`, `status_pedido`, `vitrine_social`, Realtime e Storage |
 | `supabase/migrations/002_clientes_pix.sql` | Tabela `clientes`, view `clientes_resumo`, campos de pagamento PIX e função `informar_pix` |
-| `supabase/seed.sql` | Loja Adriano Lanches, 3 categorias e 51 produtos |
+| `supabase/migrations/003_adicionais_cardapio_oficial.sql` | Tabela `adicionais`, adicionais no `criar_pedido` e o cardápio oficial (preços, vegetarianos, molho, cervejas) |
+| `supabase/seed.sql` | Carga inicial (antiga, da planilha). O cardápio atual vem da migration 003 |
 
 ## Acesso
 
 - O dono digita só o PIN. O login real no Supabase usa o usuário `PAINEL_EMAIL`, com senha `PIN_PREFIX + PIN`.
 - O usuário precisa estar em `loja_membros` para ler pedidos e editar a loja (regras RLS).
 - Nunca coloque a `service_role` key no código: o painel roda no navegador.
+
+## Adicionais
+
+Ovo, salsicha, queijo, batata palha, cebola e presunto (R$ 5); hambúrguer, catupiry, cheddar, frango desfiado, bacon e calabresa (R$ 7). Aparecem na tela dos lanches das categorias com `aceita_adicionais`. O preço é sempre recalculado no banco. Na aba Cardápio do painel dá pra mudar preço, pausar, criar e excluir adicionais.
 
 ## Clientes
 

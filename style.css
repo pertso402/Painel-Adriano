@@ -90,6 +90,7 @@ input, select, textarea { font: inherit; color: inherit; }
 .tk-items { border-top: 2px dashed var(--line); border-bottom: 2px dashed var(--line); margin: 10px 0; padding: 8px 0; font-size: .9rem; }
 .tk-item { display: flex; gap: 6px; padding: 2px 0; }
 .tk-item b { min-width: 24px; }
+.tk-adds { display: block; font-size: .78rem; font-weight: 700; color: #1F6FD1; }
 .tk-obs { display: block; color: var(--red); font-size: .78rem; font-weight: 700; padding-left: 30px; }
 .tk-up { font-family: var(--f-body); font-size: .62rem; font-weight: 800; text-transform: uppercase; background: var(--yellow); padding: 1px 5px; border-radius: 4px; margin-left: 4px; vertical-align: 2px; }
 .tk-note { font-size: .8rem; background: #FFF1EC; color: var(--red-deep); padding: 6px 8px; border-radius: 6px; margin-bottom: 8px; }

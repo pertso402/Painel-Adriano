@@ -164,7 +164,7 @@ function ticketHTML(p) {
     <span class="tk-tipo ${p.tipo_entrega === 'retirada' ? 'ret' : ''}">${p.tipo_entrega === 'retirada' ? '🏃 Retirada' : '🛵 Entrega'}</span>${p.status === 'cancelado' ? ' <span class="tk-tipo" style="background:var(--red)">Cancelado</span>' : ''}
     <div class="tk-cli">${esc(p.cliente_nome)} · <a href="${waLink(p.cliente_telefone)}" target="_blank" rel="noopener">${esc(p.cliente_telefone)}</a></div>
     ${end ? `<div class="tk-end">📍 ${end}</div>` : ''}
-    <div class="tk-items">${(p.itens_pedido || []).map(i => `<div class="tk-item"><b>${i.quantidade}x</b><span>${esc(i.produto_nome)}${i.origem === 'upgrade' ? '<span class="tk-up">turbinado</span>' : ''}${['upsell', 'bump'].includes(i.origem) ? '<span class="tk-up">sugestão</span>' : ''}</span></div>${i.observacao ? `<span class="tk-obs">↳ ${esc(i.observacao)}</span>` : ''}`).join('')}</div>
+    <div class="tk-items">${(p.itens_pedido || []).map(i => `<div class="tk-item"><b>${i.quantidade}x</b><span>${esc(i.produto_nome)}${i.adicionais?.length ? `<span class="tk-adds">${esc((i.adicionais || []).map(x => '+ ' + x.nome).join(', '))}</span>` : ''}${i.origem === 'upgrade' ? '<span class="tk-up">turbinado</span>' : ''}${['upsell', 'bump'].includes(i.origem) ? '<span class="tk-up">sugestão</span>' : ''}</span></div>${i.observacao ? `<span class="tk-obs">↳ ${esc(i.observacao)}</span>` : ''}`).join('')}</div>
     ${p.observacoes ? `<div class="tk-note">📝 ${esc(p.observacoes)}</div>` : ''}
     ${pixLine(p)}
     <div class="tk-pay"><span>${payLabel[p.forma_pagamento]}${p.pago ? ' ✓ pago' : ''}${p.troco_para ? ` · troco p/ ${fmt(p.troco_para)}` : ''}${Number(p.taxa_entrega) ? ` · entrega ${fmt(p.taxa_entrega)}` : ''}</span><span class="tk-total">${fmt(p.total)}</span></div>
@@ -270,7 +270,7 @@ function printPedido(id) {
     <div>${esc(p.cliente_nome)} · ${esc(p.cliente_telefone)}</div>
     ${e ? `<div>${esc(e.rua)}, ${esc(e.numero)} - ${esc(e.bairro)}${e.complemento ? '<br>' + esc(e.complemento) : ''}</div>` : ''}
     <hr>
-    ${(p.itens_pedido || []).map(i => `<div class="r"><span>${i.quantidade}x ${esc(i.produto_nome)}</span><span>${fmt(i.subtotal)}</span></div>${i.observacao ? `<div class="obs">* ${esc(i.observacao)}</div>` : ''}`).join('')}
+    ${(p.itens_pedido || []).map(i => `<div class="r"><span>${i.quantidade}x ${esc(i.produto_nome)}</span><span>${fmt(i.subtotal)}</span></div>${i.adicionais?.length ? `<div class="obs">${esc((i.adicionais || []).map(x => '+ ' + x.nome).join(', '))}</div>` : ''}${i.observacao ? `<div class="obs">* ${esc(i.observacao)}</div>` : ''}`).join('')}
     ${p.observacoes ? `<hr><div class="obs">OBS: ${esc(p.observacoes)}</div>` : ''}
     <hr>
     <div class="r"><span>Subtotal</span><span>${fmt(p.subtotal)}</span></div>
