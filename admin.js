@@ -181,6 +181,24 @@ async function deleteProd(id) {
 }
 
 // ── Configurações da loja ──────────────────────────────────
+// chave PIX: guarda no formato do Banco Central (celular vira +55DDDNUMERO)
+function pixTipo(k) {
+  const s = String(k || '');
+  if (!s) return 'celular';
+  if (s.startsWith('+')) return 'celular';
+  if (s.includes('@')) return 'email';
+  if (/^[0-9a-f-]{36}$/i.test(s)) return 'aleatoria';
+  return s.replace(/\D/g, '').length === 14 ? 'cnpj' : 'cpf';
+}
+const pixShow = k => String(k || '').startsWith('+55') ? String(k).slice(3) : (k || '');
+function pixSave(tipo, v) {
+  const s = String(v || '').trim(); if (!s) return null;
+  const d = s.replace(/\D/g, '');
+  if (tipo === 'celular') return '+55' + d.replace(/^55(?=\d{10,11}$)/, '');
+  if (tipo === 'cpf' || tipo === 'cnpj') return d;
+  if (tipo === 'email') return s.toLowerCase();
+  return s;
+}
 function renderLojaForm() {
   const c = LOJA.config || {};
   const h = c.horario || {};
@@ -193,7 +211,8 @@ function renderLojaForm() {
     <div class="lf"><label>Tempo de entrega</label><input class="field" name="tempo_entrega" value="${esc(c.tempo_entrega || '')}" placeholder="40-60 min"></div>
     <div class="lf"><label>Tempo de retirada</label><input class="field" name="tempo_retirada" value="${esc(c.tempo_retirada || '')}" placeholder="20-30 min"></div>
     <div class="lf"><label>WhatsApp da loja</label><input class="field" name="whatsapp" value="${esc(c.whatsapp || '')}" placeholder="44999999999"></div>
-    <div class="lf"><label>Chave PIX</label><input class="field" name="chave_pix" value="${esc(c.chave_pix || '')}" placeholder="celular com +55, CPF, CNPJ, e-mail ou aleatória"><small>Com a chave preenchida, o cliente que escolhe PIX recebe QR Code e copia e cola com o valor do pedido.</small></div>
+    <div class="lf"><label>Tipo da chave PIX</label><select class="field" name="pix_tipo">${[['celular', 'Celular'], ['cpf', 'CPF'], ['cnpj', 'CNPJ'], ['email', 'E-mail'], ['aleatoria', 'Chave aleatória']].map(([v, t]) => `<option value="${v}" ${pixTipo(c.chave_pix) === v ? 'selected' : ''}>${t}</option>`).join('')}</select></div>
+    <div class="lf"><label>Chave PIX</label><input class="field" name="chave_pix" value="${esc(pixShow(c.chave_pix))}" placeholder="ex.: 44999529211"><small>O cliente que escolhe PIX recebe o QR e o copia e cola com o valor do pedido, e manda o comprovante no WhatsApp da loja.</small></div>
     <div class="lf" style="grid-column:1/-1"><label>Endereço (retirada)</label><input class="field" name="endereco" value="${esc(c.endereco || '')}"></div>
     <div class="lf-actions"><button class="btn" type="submit">Salvar configurações</button></div>`;
 }
@@ -209,7 +228,7 @@ $('lojaForm').onsubmit = async e => {
     horario: { abre: f.abre, fecha: f.fecha },
     tempo_entrega: f.tempo_entrega, tempo_retirada: f.tempo_retirada,
     whatsapp: f.whatsapp.replace(/\D/g, '') || null,
-    chave_pix: f.chave_pix.trim() || null,
+    chave_pix: pixSave(f.pix_tipo, f.chave_pix),
     endereco: f.endereco.trim(),
   };
   const { error } = await supa.from('lojas').update({ config }).eq('id', LOJA.id);

@@ -146,7 +146,7 @@ function waLink(tel) { const d = (tel || '').replace(/\D/g, ''); return 'https:/
 function pixLine(p) {
   if (p.forma_pagamento !== 'pix' || p.status === 'cancelado') return '';
   if (p.pago) return '<div class="tk-pix ok">⚡ PIX confirmado</div>';
-  return `<div class="tk-pix ${p.pix_informado_em ? 'warn' : ''}">${p.pix_informado_em ? '⚡ Cliente diz que pagou: confira no banco' : '⚡ PIX: aguardando pagamento'}<button onclick="confirmarPix('${p.id}')">Confirmar</button></div>`;
+  return `<div class="tk-pix ${p.pix_informado_em ? 'warn' : ''}">${p.pix_informado_em ? '⚡ Comprovante enviado no WhatsApp: confira e confirme' : '⚡ PIX: aguardando o cliente pagar'}<button onclick="confirmarPix('${p.id}')">Confirmar</button></div>`;
 }
 async function confirmarPix(id) {
   const p = PEDIDOS.get(id); if (!p) return;
@@ -224,7 +224,7 @@ function subscribe() {
     })
     .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'pedidos', filter: `loja_id=eq.${LOJA.id}` }, ({ new: row }) => {
       const p = PEDIDOS.get(row.id);
-      if (p && !p.pix_informado_em && row.pix_informado_em) toast(`⚡ Pedido #${String(row.numero).padStart(3, '0')}: cliente avisou que pagou o PIX`);
+      if (p && !p.pix_informado_em && row.pix_informado_em) toast(`⚡ Pedido #${String(row.numero).padStart(3, '0')}: comprovante do PIX enviado no WhatsApp`);
       if (p) Object.assign(p, row); else PEDIDOS.set(row.id, { ...row, itens_pedido: [] });
       renderBoard(); renderStats();
     })
