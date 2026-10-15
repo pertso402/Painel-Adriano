@@ -17,6 +17,7 @@ HTML, CSS e JavaScript puros, sem build. O backend é o Supabase (projeto CARDAP
 | `supabase/migrations/001_initial.sql` | Tabelas, RLS, funções `criar_pedido`, `status_pedido`, `vitrine_social`, Realtime e Storage |
 | `supabase/migrations/002_clientes_pix.sql` | Tabela `clientes`, view `clientes_resumo`, campos de pagamento PIX e função `informar_pix` |
 | `supabase/migrations/003_adicionais_cardapio_oficial.sql` | Tabela `adicionais`, adicionais no `criar_pedido` e o cardápio oficial (preços, vegetarianos, molho, cervejas) |
+| `supabase/migrations/004_comprovante_distancia.sql` | Comprovante PIX anexado (bucket privado `comprovantes`), taxa por raio e `distancia_km` |
 | `supabase/seed.sql` | Carga inicial (antiga, da planilha). O cardápio atual vem da migration 003 |
 
 ## Acesso
@@ -35,7 +36,11 @@ Todo pedido cria ou atualiza o cliente pelo telefone (só dígitos) dentro da lo
 
 ## PIX
 
-Sem gateway e sem taxa: com a chave PIX preenchida na aba Loja, o cardápio gera o código copia e cola com o valor exato do pedido. Quando o cliente toca em "Já paguei", o ticket fica amarelo no painel. O dono confere no banco e toca em **Confirmar**, e o cliente vê a confirmação na tela dele.
+Sem gateway e sem taxa. O cliente paga pelo QR (valor exato), anexa o print do comprovante no próprio cardápio (ou manda no WhatsApp, como alternativa) e o pedido fica na coluna **Aguardando PIX**, com a foto do comprovante no ticket. O dono confere no banco e toca em **PIX conferido**: o pedido vai para **Novos**. Som: um toque suave quando entra pedido PIX e um lembrete por minuto enquanto houver comprovante para conferir.
+
+## Taxa por distância
+
+Até `entrega_raio_km` (4 km) cobra `taxa_entrega` (R$ 8); acima, `taxa_entrega_longe` (R$ 12). A distância é em linha reta, pelo GPS do cliente (preciso) ou pelo endereço no OpenStreetMap (aproximado). O banco recalcula no `criar_pedido`. O ticket mostra a distância e o link do mapa; sem posição, cobra a taxa base e avisa "distância não conferida".
 
 ## Banco multi-loja
 

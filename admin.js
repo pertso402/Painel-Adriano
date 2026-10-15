@@ -199,11 +199,29 @@ function pixSave(tipo, v) {
   if (tipo === 'email') return s.toLowerCase();
   return s;
 }
+// acha a loja no mapa (OpenStreetMap) pelo endereço salvo
+async function localizarLoja() {
+  const end = (LOJA.config?.endereco || '').replace(/—/g, ',');
+  if (!end) return toast('Preencha o endereço da loja primeiro');
+  toast('Procurando no mapa…');
+  try {
+    const r = await fetch('https://nominatim.openstreetmap.org/search?format=json&limit=1&countrycodes=br&q=' + encodeURIComponent(end));
+    const j = await r.json();
+    if (!j[0]) return toast('Não achei esse endereço no mapa');
+    const config = { ...LOJA.config, loja_lat: +(+j[0].lat).toFixed(7), loja_lng: +(+j[0].lon).toFixed(7) };
+    const { error } = await supa.from('lojas').update({ config }).eq('id', LOJA.id);
+    if (error) return toast('Erro: ' + error.message);
+    LOJA.config = config; renderLojaForm(); toast('Posição da loja atualizada ✓');
+  } catch { toast('Não deu pra consultar o mapa agora'); }
+}
 function renderLojaForm() {
   const c = LOJA.config || {};
   const h = c.horario || {};
   $('lojaForm').innerHTML = `
-    <div class="lf"><label>Taxa de entrega (R$)</label><input class="field" name="taxa_entrega" type="number" step="0.5" min="0" value="${c.taxa_entrega ?? ''}"></div>
+    <div class="lf"><label>Taxa de entrega (R$)</label><input class="field" name="taxa_entrega" type="number" step="0.5" min="0" value="${c.taxa_entrega ?? ''}"><small>Vale até o raio abaixo.</small></div>
+    <div class="lf"><label>Raio da taxa normal (km)</label><input class="field" name="entrega_raio_km" type="number" step="0.5" min="0" value="${c.entrega_raio_km ?? ''}" placeholder="vazio = taxa única"></div>
+    <div class="lf"><label>Taxa acima do raio (R$)</label><input class="field" name="taxa_entrega_longe" type="number" step="0.5" min="0" value="${c.taxa_entrega_longe ?? ''}"></div>
+    <div class="lf"><label>Posição da loja no mapa</label><input class="field" id="lojaPos" readonly value="${c.loja_lat != null ? `${c.loja_lat}, ${c.loja_lng}` : 'não definida'}"><small><a href="#" onclick="event.preventDefault();localizarLoja()" style="color:var(--yellow)">Atualizar pelo endereço da loja</a> · <a href="${c.loja_lat != null ? `https://www.google.com/maps/search/?api=1&query=${c.loja_lat},${c.loja_lng}` : '#'}" target="_blank" rel="noopener" style="color:var(--yellow)">conferir no mapa</a></small></div>
     <div class="lf"><label>Frete grátis acima de (R$)</label><input class="field" name="frete_gratis_acima" type="number" step="1" min="0" value="${c.frete_gratis_acima ?? ''}" placeholder="vazio = sem frete grátis"><small>Liga a barra "faltam R$ X pro frete grátis" no cardápio.</small></div>
     <div class="lf"><label>Pedido mínimo (R$)</label><input class="field" name="pedido_minimo" type="number" step="1" min="0" value="${c.pedido_minimo ?? 0}"></div>
     <div class="lf"><label>Abre às</label><input class="field" name="abre" type="time" value="${h.abre || '19:00'}"></div>
@@ -223,6 +241,8 @@ $('lojaForm').onsubmit = async e => {
   const config = {
     ...(LOJA.config || {}),
     taxa_entrega: num(f.taxa_entrega) ?? 0,
+    entrega_raio_km: num(f.entrega_raio_km),
+    taxa_entrega_longe: num(f.taxa_entrega_longe),
     frete_gratis_acima: num(f.frete_gratis_acima),
     pedido_minimo: num(f.pedido_minimo) ?? 0,
     horario: { abre: f.abre, fecha: f.fecha },
@@ -236,4 +256,4 @@ $('lojaForm').onsubmit = async e => {
   LOJA.config = config; toast('Configurações salvas ✓');
 };
 
-Object.assign(window, { updateAdd, newAdd, deleteAdd, initAdmin, pickPhoto, savePrice, toggleDisp, toggleDest, openProd, saveProd, deleteProd, closeModal, renderLojaForm });
+Object.assign(window, { localizarLoja, updateAdd, newAdd, deleteAdd, initAdmin, pickPhoto, savePrice, toggleDisp, toggleDest, openProd, saveProd, deleteProd, closeModal, renderLojaForm });

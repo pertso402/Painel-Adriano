@@ -125,7 +125,8 @@ function renderStats() {
   $('stUpPct').textContent = list.length ? `${vendasItens ? Math.round(sug / vendasItens * 100) : 0}% dos itens · ${turb} turbinado${turb === 1 ? '' : 's'}` : '';
 }
 
-const colOf = s => ({ novo: 'novo', preparo: 'preparo', pronto: 'pronto', entrega: 'pronto', finalizado: 'finalizado', cancelado: 'finalizado' }[s]);
+const pixAguardando = p => p.status === 'novo' && p.forma_pagamento === 'pix' && !p.pago;
+const colOf = p => pixAguardando(p) ? 'pix' : ({ novo: 'novo', preparo: 'preparo', pronto: 'pronto', entrega: 'pronto', finalizado: 'finalizado', cancelado: 'finalizado' }[p.status]);
 function ago(ts) {
   const m = Math.floor((Date.now() - new Date(ts)) / 60000);
   if (m < 1) return 'agora';
@@ -133,6 +134,7 @@ function ago(ts) {
   return `há ${Math.floor(m / 60)}h${String(m % 60).padStart(2, '0')}`;
 }
 function nextAction(p) {
+  if (pixAguardando(p)) return { to: 'pix', label: '✓ PIX conferido', cls: 'green' };
   if (p.status === 'novo') return { to: 'preparo', label: '🔥 Aceitar · pra chapa', cls: '' };
   if (p.status === 'preparo') return p.tipo_entrega === 'delivery'
     ? { to: 'entrega', label: '🛵 Saiu pra entrega', cls: 'blue' }
@@ -146,10 +148,41 @@ function waLink(tel) { const d = (tel || '').replace(/\D/g, ''); return 'https:/
 function pixLine(p) {
   if (p.forma_pagamento !== 'pix' || p.status === 'cancelado') return '';
   if (p.pago) return '<div class="tk-pix ok">⚡ PIX confirmado</div>';
+  if (pixAguardando(p)) {
+    if (p.comprovante_path) return `<button class="tk-proof" onclick="verComprovante('${p.id}')">${/\.pdf$/i.test(p.comprovante_path) ? '<span>📄 Comprovante em PDF · toque pra abrir</span>' : `<img data-proof="${p.id}" alt="Comprovante do PIX"><em>ampliar</em>`}</button>
+      <div class="tk-pix warn">📎 Comprovante chegou · confira no banco</div>`;
+    if (p.pix_informado_em) return '<div class="tk-pix warn">⚡ Disse que mandou o comprovante no WhatsApp · confira</div>';
+    return `<div class="tk-wait">⏳ Esperando o cliente pagar · ${ago(p.created_at)}</div>`;
+  }
   return `<div class="tk-pix ${p.pix_informado_em ? 'warn' : ''}">${p.pix_informado_em ? '⚡ Comprovante enviado no WhatsApp: confira e confirme' : '⚡ PIX: aguardando o cliente pagar'}<button onclick="confirmarPix('${p.id}')">Confirmar</button></div>`;
+}
+function kmLine(p) {
+  const e = p.endereco || {};
+  const mapa = e.lat != null ? `https://www.google.com/maps/search/?api=1&query=${e.lat},${e.lng}` : `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${e.rua}, ${e.numero}, ${e.bairro}, ${(LOJA.config?.endereco || '').split(',').pop()}`)}`;
+  const km = p.distancia_km != null ? `${String(Number(p.distancia_km)).replace('.', ',')} km${e.fonte === 'gps' ? ' (GPS)' : ' (aprox.)'}` : '<span class="warn">distância não conferida</span>';
+  return `<div class="tk-km">${km} · <a href="${mapa}" target="_blank" rel="noopener">ver no mapa</a></div>`;
+}
+// foto do comprovante (bucket privado → link temporário)
+const proofUrls = new Map();
+async function proofUrl(p) {
+  if (proofUrls.has(p.comprovante_path)) return proofUrls.get(p.comprovante_path);
+  const { data } = await supa.storage.from('comprovantes').createSignedUrl(p.comprovante_path, 3600);
+  if (data?.signedUrl) proofUrls.set(p.comprovante_path, data.signedUrl);
+  return data?.signedUrl;
+}
+function loadProofs() {
+  document.querySelectorAll('img[data-proof]').forEach(async img => {
+    const p = PEDIDOS.get(img.dataset.proof); if (!p?.comprovante_path) return;
+    const u = await proofUrl(p); if (u && img.src !== u) img.src = u;
+  });
+}
+async function verComprovante(id) {
+  const p = PEDIDOS.get(id); if (!p?.comprovante_path) return;
+  const u = await proofUrl(p); if (u) window.open(u, '_blank'); else toast('Não deu pra abrir o comprovante');
 }
 async function confirmarPix(id) {
   const p = PEDIDOS.get(id); if (!p) return;
+  ackIds.add(id);
   p.pago = true; p.pago_em = new Date().toISOString(); renderBoard();
   const { error } = await supa.from('pedidos').update({ pago: true, pago_em: p.pago_em }).eq('id', id);
   if (error) { p.pago = false; renderBoard(); return toast('Não salvou: ' + error.message); }
@@ -163,34 +196,36 @@ function ticketHTML(p) {
     <div class="tk-top"><span class="tk-num">#${String(p.numero).padStart(3, '0')}</span><span class="tk-age ${late ? 'late' : ''}">${ago(p.created_at)} · ${new Date(p.created_at).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit', timeZone: 'America/Sao_Paulo' })}</span></div>
     <span class="tk-tipo ${p.tipo_entrega === 'retirada' ? 'ret' : ''}">${p.tipo_entrega === 'retirada' ? '🏃 Retirada' : '🛵 Entrega'}</span>${p.status === 'cancelado' ? ' <span class="tk-tipo" style="background:var(--red)">Cancelado</span>' : ''}
     <div class="tk-cli">${esc(p.cliente_nome)} · <a href="${waLink(p.cliente_telefone)}" target="_blank" rel="noopener">${esc(p.cliente_telefone)}</a></div>
-    ${end ? `<div class="tk-end">📍 ${end}</div>` : ''}
+    ${end ? `<div class="tk-end">📍 ${end}</div>${kmLine(p)}` : ''}
     <div class="tk-items">${(p.itens_pedido || []).map(i => `<div class="tk-item"><b>${i.quantidade}x</b><span>${esc(i.produto_nome)}${i.adicionais?.length ? `<span class="tk-adds">${esc((i.adicionais || []).map(x => '+ ' + x.nome).join(', '))}</span>` : ''}${i.origem === 'upgrade' ? '<span class="tk-up">turbinado</span>' : ''}${['upsell', 'bump'].includes(i.origem) ? '<span class="tk-up">sugestão</span>' : ''}</span></div>${i.observacao ? `<span class="tk-obs">↳ ${esc(i.observacao)}</span>` : ''}`).join('')}</div>
     ${p.observacoes ? `<div class="tk-note">📝 ${esc(p.observacoes)}</div>` : ''}
     ${pixLine(p)}
     <div class="tk-pay"><span>${payLabel[p.forma_pagamento]}${p.pago ? ' ✓ pago' : ''}${p.troco_para ? ` · troco p/ ${fmt(p.troco_para)}` : ''}${Number(p.taxa_entrega) ? ` · entrega ${fmt(p.taxa_entrega)}` : ''}</span><span class="tk-total">${fmt(p.total)}</span></div>
     ${p.status !== 'cancelado' ? `<div class="tk-actions">
-      ${act ? `<button class="tk-go ${act.cls}" onclick="setStatus('${p.id}','${act.to}')">${act.label}</button>` : '<span></span>'}
+      ${act ? `<button class="tk-go ${act.cls}" onclick="${act.to === 'pix' ? `confirmarPix('${p.id}')` : `setStatus('${p.id}','${act.to}')`}">${act.label}</button>` : '<span></span>'}
       <button class="tk-sm" onclick="printPedido('${p.id}')" title="Imprimir">🖨</button>
       ${p.status !== 'finalizado' ? `<button class="tk-sm" onclick="cancelPedido('${p.id}')" title="Cancelar">✕</button>` : ''}
     </div>` : ''}
   </article>`;
 }
 function renderBoard() {
-  const cols = { novo: [], preparo: [], pronto: [], finalizado: [] };
+  const cols = { pix: [], novo: [], preparo: [], pronto: [], finalizado: [] };
   for (const p of PEDIDOS.values()) {
-    const c = colOf(p.status);
+    const c = colOf(p);
     if (c === 'finalizado' && !inPeriod(p)) continue;
     cols[c].push(p);
   }
   for (const [c, list] of Object.entries(cols)) {
     list.sort((a, b) => c === 'finalizado' ? new Date(b.updated_at) - new Date(a.updated_at) : new Date(a.created_at) - new Date(b.created_at));
-    $('col-' + c).innerHTML = list.length ? list.map(ticketHTML).join('') : `<div class="col-empty">${{ novo: 'Nenhum pedido novo. Já já pinga 🔔', preparo: 'Chapa livre', pronto: 'Nada esperando', finalizado: 'Nada finalizado no período' }[c]}</div>`;
+    $('col-' + c).innerHTML = list.length ? list.map(ticketHTML).join('') : `<div class="col-empty">${{ pix: 'Nenhum PIX esperando', novo: 'Nenhum pedido novo. Já já pinga 🔔', preparo: 'Chapa livre', pronto: 'Nada esperando', finalizado: 'Nada finalizado no período' }[c]}</div>`;
     $('cnt-' + c).textContent = list.length;
   }
-  const novos = cols.novo.length;
-  $('badgeNovos').hidden = !novos; $('badgeNovos').textContent = novos;
-  document.title = novos ? `(${novos}) NOVO PEDIDO · Painel` : 'Painel · Adriano Lanches';
-  ringIfNeeded(novos);
+  const novos = cols.novo.length, conferir = cols.pix.filter(p => p.pix_informado_em).length;
+  $('badgeNovos').hidden = !(novos + conferir); $('badgeNovos').textContent = novos + conferir;
+  document.title = novos ? `(${novos}) NOVO PEDIDO · Painel` : conferir ? `(${conferir}) PIX PRA CONFERIR · Painel` : 'Painel · Adriano Lanches';
+  ringIfNeeded(cols.novo.filter(p => !ackIds.has(p.id)).length);
+  remindPix(conferir);
+  loadProofs();
 }
 
 async function setStatus(id, status) {
@@ -219,12 +254,14 @@ function subscribe() {
       if (!p) return;
       PEDIDOS.set(p.id, p); freshIds.add(p.id);
       renderBoard(); renderStats();
-      toast(`🔔 Novo pedido #${String(p.numero).padStart(3, '0')} · ${fmt(p.total)}`);
+      toast(pixAguardando(p) ? `⏳ Pedido #${String(p.numero).padStart(3, '0')} · ${fmt(p.total)} · esperando o PIX` : `🔔 Novo pedido #${String(p.numero).padStart(3, '0')} · ${fmt(p.total)}`);
+      if (pixAguardando(p)) chime(1);
       if (window.Notification?.permission === "granted" && document.hidden) new Notification('Novo pedido!', { body: `#${p.numero} · ${p.cliente_nome} · ${fmt(p.total)}`, icon: 'https://imvzfueqnpkcrxumiqwz.supabase.co/storage/v1/object/public/produto-fotos/adriano-lanches/logo.webp' });
     })
     .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'pedidos', filter: `loja_id=eq.${LOJA.id}` }, ({ new: row }) => {
       const p = PEDIDOS.get(row.id);
-      if (p && !p.pix_informado_em && row.pix_informado_em) toast(`⚡ Pedido #${String(row.numero).padStart(3, '0')}: comprovante do PIX enviado no WhatsApp`);
+      if (p && !p.comprovante_em && row.comprovante_em) { toast(`📎 Pedido #${String(row.numero).padStart(3, '0')}: comprovante do PIX chegou`); chime(); }
+      else if (p && !p.pix_informado_em && row.pix_informado_em) { toast(`⚡ Pedido #${String(row.numero).padStart(3, '0')}: cliente diz que mandou o comprovante no WhatsApp`); chime(); }
       if (p) Object.assign(p, row); else PEDIDOS.set(row.id, { ...row, itens_pedido: [] });
       renderBoard(); renderStats();
     })
@@ -250,6 +287,24 @@ function beep() {
     o.connect(g).connect(audioCtx.destination); o.start(t + d); o.stop(t + d + .15);
   });
 }
+// toque curto e suave (PIX): 2 notas, volume baixo
+function chime(notes = 2) {
+  if (!audioCtx || !soundOn) return;
+  const t = audioCtx.currentTime;
+  [[659, 0], [988, .22]].slice(0, notes).forEach(([f, d]) => {
+    const o = audioCtx.createOscillator(), g = audioCtx.createGain();
+    o.type = 'sine'; o.frequency.value = f;
+    g.gain.setValueAtTime(.0001, t + d); g.gain.exponentialRampToValueAtTime(.12, t + d + .03); g.gain.exponentialRampToValueAtTime(.0001, t + d + .5);
+    o.connect(g).connect(audioCtx.destination); o.start(t + d); o.stop(t + d + .55);
+  });
+}
+// comprovante esperando conferência: lembra a cada 1 minuto (não fica apitando)
+let pixTimer = null;
+function remindPix(n) {
+  if (n && soundOn) { if (!pixTimer) pixTimer = setInterval(() => chime(), 60000); }
+  else { clearInterval(pixTimer); pixTimer = null; }
+}
+const ackIds = new Set(); // PIX conferido aqui não precisa tocar de novo em "Novos"
 function ringIfNeeded(novos) {
   if (novos && soundOn) { if (!ringTimer) { beep(); ringTimer = setInterval(beep, 3000); } }
   else { clearInterval(ringTimer); ringTimer = null; }
@@ -268,7 +323,7 @@ function printPedido(id) {
     <div class="c">${new Date(p.created_at).toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' })}</div>
     <hr><div class="c big">PEDIDO #${String(p.numero).padStart(3, '0')} · ${p.tipo_entrega === 'retirada' ? 'RETIRADA' : 'ENTREGA'}</div><hr>
     <div>${esc(p.cliente_nome)} · ${esc(p.cliente_telefone)}</div>
-    ${e ? `<div>${esc(e.rua)}, ${esc(e.numero)} - ${esc(e.bairro)}${e.complemento ? '<br>' + esc(e.complemento) : ''}</div>` : ''}
+    ${e ? `<div>${esc(e.rua)}, ${esc(e.numero)} - ${esc(e.bairro)}${e.complemento ? '<br>' + esc(e.complemento) : ''}${p.distancia_km != null ? `<br>${String(Number(p.distancia_km)).replace('.', ',')} km da loja` : ''}</div>` : ''}
     <hr>
     ${(p.itens_pedido || []).map(i => `<div class="r"><span>${i.quantidade}x ${esc(i.produto_nome)}</span><span>${fmt(i.subtotal)}</span></div>${i.adicionais?.length ? `<div class="obs">${esc((i.adicionais || []).map(x => '+ ' + x.nome).join(', '))}</div>` : ''}${i.observacao ? `<div class="obs">* ${esc(i.observacao)}</div>` : ''}`).join('')}
     ${p.observacoes ? `<hr><div class="obs">OBS: ${esc(p.observacoes)}</div>` : ''}
@@ -287,4 +342,4 @@ function printPedido(id) {
   if (data.session) await enter();
 })();
 
-Object.assign(window, { setStatus, cancelPedido, printPedido, confirmarPix });
+Object.assign(window, { setStatus, cancelPedido, printPedido, confirmarPix, verComprovante });
