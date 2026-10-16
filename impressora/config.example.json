@@ -1,0 +1,14 @@
+{
+  "supabaseUrl": "https://imvzfueqnpkcrxumiqwz.supabase.co",
+  "publishableKey": "sb_publishable_TtmQ7PjaXbu-asGSC9AJbQ_OaRl31ku",
+  "lojaSlug": "adriano-lanches",
+  "nomeLoja": "Adriano Lanches",
+  "email": "painel@adriano-lanches.app",
+  "senha": "ADL#<PIN do painel>",
+  "printerName": "",
+  "modo": "windows",
+  "vias": ["Cozinha", "Entrega"],
+  "imprimirPix": "conferido",
+  "lineWidth": 42,
+  "fonteTamanho": 9
+}
