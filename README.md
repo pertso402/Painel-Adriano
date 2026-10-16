@@ -20,6 +20,7 @@ HTML, CSS e JavaScript puros, sem build. O backend é o Supabase (projeto CARDAP
 | `supabase/migrations/004_comprovante_distancia.sql` | Comprovante PIX anexado (bucket privado `comprovantes`), taxa por raio e `distancia_km` |
 | `supabase/migrations/005_distancia_caminho_carro.sql` | `calcular_entrega`: taxa pelo caminho de carro (rota OSRM) com checagem no banco |
 | `supabase/migrations/006_impresso_em.sql` | `pedidos.impresso_em`: a impressora automática marca o que já imprimiu |
+| `supabase/migrations/007_impressora_status.sql` | `impressora_status`: sinal de vida da impressora (o painel mostra ligada/desligada) |
 | `impressora/` | Programa de impressão automática para o notebook do balcão (veja o README dela) |
 | `supabase/seed.sql` | Carga inicial (antiga, da planilha). O cardápio atual vem da migration 003 |
 
@@ -47,7 +48,11 @@ Até `entrega_raio_km` (4 km) cobra `taxa_entrega` (R$ 8); acima, `taxa_entrega_
 
 ## Impressão automática
 
-A pasta `impressora/` roda no notebook com a térmica: entra como a loja, acompanha os pedidos em tempo real e imprime **cada via (Cozinha e Entrega) como um trabalho separado, cortado no seu papel**. Marca `impresso_em` para não repetir; PIX só sai depois do **PIX conferido**. Instalação em `impressora/README.md`. O `config.json` dela tem a senha da loja e nunca vai para o Git.
+A pasta `impressora/` roda no notebook com a térmica: entra como a loja, acompanha os pedidos em tempo real e imprime **cada via (Cozinha e Entrega) como um trabalho separado, cortado no seu papel**. Marca `impresso_em` para não repetir; PIX só sai depois do **PIX conferido**. Instalação: dois cliques no `impressora/INSTALAR.cmd` (detalhes em `impressora/README.md`). O painel mostra **Impressora ligada/desligada** pelo sinal que ela manda a cada minuto. O `config.json` dela tem a senha da loja e nunca vai para o Git.
+
+## Abrir e fechar a loja
+
+Só no manual: o botão no topo do painel (**Loja fechada / Loja aberta**). Fechada, o cardápio mostra o aviso "Fechado · abre às 19:00", o botão de pedir fica travado e o banco (`criar_pedido`) recusa qualquer pedido. O horário da aba Loja é só informativo.
 
 ## Banco multi-loja
 

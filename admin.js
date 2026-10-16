@@ -225,7 +225,7 @@ function renderLojaForm() {
     <div class="lf"><label>Frete grátis acima de (R$)</label><input class="field" name="frete_gratis_acima" type="number" step="1" min="0" value="${c.frete_gratis_acima ?? ''}" placeholder="vazio = sem frete grátis"><small>Liga a barra "faltam R$ X pro frete grátis" no cardápio.</small></div>
     <div class="lf"><label>Pedido mínimo (R$)</label><input class="field" name="pedido_minimo" type="number" step="1" min="0" value="${c.pedido_minimo ?? 0}"></div>
     <div class="lf"><label>Abre às</label><input class="field" name="abre" type="time" value="${h.abre || '19:00'}"></div>
-    <div class="lf"><label>Fecha às</label><input class="field" name="fecha" type="time" value="${h.fecha || '01:00'}"><small>No modo "Auto" a loja abre e fecha sozinha nesse horário.</small></div>
+    <div class="lf"><label>Fecha às</label><input class="field" name="fecha" type="time" value="${h.fecha || '01:00'}"><small>Só aparece no cardápio ("abre às"). Quem abre e fecha a loja é o botão no topo do painel.</small></div>
     <div class="lf"><label>Tempo de entrega</label><input class="field" name="tempo_entrega" value="${esc(c.tempo_entrega || '')}" placeholder="40-60 min"></div>
     <div class="lf"><label>Tempo de retirada</label><input class="field" name="tempo_retirada" value="${esc(c.tempo_retirada || '')}" placeholder="20-30 min"></div>
     <div class="lf"><label>WhatsApp da loja</label><input class="field" name="whatsapp" value="${esc(c.whatsapp || '')}" placeholder="44999999999"></div>

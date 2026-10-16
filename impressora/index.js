@@ -7,6 +7,7 @@
 //  imprimir em dobro, mesmo depois de reiniciar o notebook.
 //  Uso: node index.js           (monitorar)
 //       node index.js --teste   (imprime uma comanda de exemplo)
+//       node index.js --checar  (só confere o login da loja)
 // ═══════════════════════════════════════════════════════════
 const fs = require('node:fs');
 const path = require('node:path');
@@ -17,7 +18,7 @@ const { createClient } = require('@supabase/supabase-js');
 
 const CONFIG = path.join(__dirname, 'config.json');
 if (!fs.existsSync(CONFIG)) { console.error('Falta o config.json (copie o config.example.json e preencha).'); process.exit(1); }
-const cfg = JSON.parse(fs.readFileSync(CONFIG, 'utf8'));
+const cfg = JSON.parse(fs.readFileSync(CONFIG, 'utf8').replace(/^﻿/, ''));
 const VIAS = Array.isArray(cfg.vias) && cfg.vias.length ? cfg.vias : ['Cozinha', 'Entrega'];
 const MODO = cfg.modo === 'escpos' ? 'escpos' : 'windows';
 const PIX_NA_HORA = cfg.imprimirPix === 'na-hora';
@@ -39,7 +40,7 @@ function guardar() {
 }
 
 // ── Serviço de impressão (PowerShell fica aberto e recebe um trabalho por linha) ──
-let ps = null, pronto = null, buf = '', seq = 0;
+let ps = null, pronto = null, buf = '', seq = 0, NOME_IMPRESSORA = '', ultimoErro = null;
 const respostas = new Map();
 function servico() {
   if (pronto) return pronto;
@@ -53,7 +54,7 @@ function servico() {
       buf += d; const linhas = buf.split(/\r?\n/); buf = linhas.pop() || '';
       for (const l of linhas) {
         if (!l.trim()) continue;
-        if (l.trim().startsWith('READY')) { clearTimeout(t); log('Impressora pronta:', l.trim().slice(6) || '(padrão)', `· modo ${MODO}`); resolve(); continue; }
+        if (l.trim().startsWith('READY')) { clearTimeout(t); NOME_IMPRESSORA = l.trim().slice(6); log('Impressora pronta:', l.trim().slice(6) || '(padrão)', `· modo ${MODO}`); resolve(); continue; }
         try { const r = JSON.parse(l); const w = respostas.get(r.id); if (w) { respostas.delete(r.id); r.ok ? w.resolve() : w.reject(new Error(r.erro || 'Falha ao imprimir')); } }
         catch { log('Impressora disse:', l); }
       }
@@ -110,9 +111,11 @@ async function processar(id) {
     estado.impressos[id] = new Date().toISOString(); guardar();
     const { error } = await sb.from('pedidos').update({ impresso_em: estado.impressos[id] }).eq('id', id);
     if (error) log(`Pedido #${p.numero}: impresso, mas não marquei no banco (${error.message}).`);
+    ultimoErro = null;
     log(`Pedido #${p.numero} impresso (${VIAS.length} via${VIAS.length > 1 ? 's' : ''}).`);
   } catch (e) {
     esperar.set(id, Date.now() + 30000);
+    ultimoErro = e.message;
     log(`Falha no pedido ${id}: ${e.message}. Tento de novo em 30s.`);
   } finally { emAndamento.delete(id); }
 }
@@ -135,10 +138,16 @@ async function entrar() {
   log(`Conectado à loja ${LOJA.nome}.`);
 }
 
+// sinal de vida: o painel mostra "impressora ligada" enquanto isto chega a cada minuto
+async function sinalDeVida() {
+  const { error } = await sb.from('impressora_status').upsert({ loja_id: LOJA.id, visto_em: new Date().toISOString(), impressora: NOME_IMPRESSORA || null, erro: ultimoErro });
+  if (error) log('Sinal de vida falhou:', error.message);
+}
+
 async function iniciar() {
   if (process.platform !== 'win32') throw new Error('Rode no notebook Windows com a impressora instalada.');
   const trava = net.createServer();
-  await new Promise((res, rej) => { trava.once('error', () => rej(new Error('A impressora automática já está rodando neste notebook.'))); trava.listen(47685, '127.0.0.1', res); });
+  await new Promise((res, rej) => { trava.once('error', () => { const e = new Error('A impressora automática já está rodando neste notebook.'); e.code = 3; rej(e); }); trava.listen(47685, '127.0.0.1', res); });
   if (fs.existsSync(ESTADO)) estado = JSON.parse(fs.readFileSync(ESTADO, 'utf8'));
   await servico();
   await entrar();
@@ -148,6 +157,7 @@ async function iniciar() {
     .subscribe(s => log('Tempo real:', s));
   await varrer();
   setInterval(varrer, 15000);
+  sinalDeVida(); setInterval(sinalDeVida, 60000);
   log(`Monitorando pedidos · ${VIAS.length} via(s): ${VIAS.join(' + ')} · PIX imprime ${PIX_NA_HORA ? 'na hora' : 'depois de conferido'}.`);
 }
 
@@ -167,7 +177,14 @@ async function teste() {
   process.exit(0);
 }
 
+async function checar() {
+  await entrar();
+  console.log('LOGIN_OK ' + LOJA.nome);
+  process.exit(0);
+}
+
 if (require.main === module) {
-  (process.argv.includes('--teste') ? teste() : iniciar()).catch(e => { console.error('Não iniciou:', e.message); process.exit(1); });
+  const modo = process.argv.includes('--teste') ? teste : process.argv.includes('--checar') ? checar : iniciar;
+  modo().catch(e => { console.error('Não iniciou:', e.message); process.exit(e.code === 3 ? 3 : 1); });
 }
 module.exports = { deveImprimir };

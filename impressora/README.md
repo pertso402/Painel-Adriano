@@ -1,43 +1,47 @@
 # Impressora automática — Adriano Lanches
 
-Programa que fica rodando no notebook do balcão e imprime sozinho cada pedido que chega no painel.
+Programa que fica rodando no computador do balcão e imprime sozinho cada pedido que chega no painel.
 
 - **Cada via é um trabalho separado** na impressora (Cozinha e Entrega), cada uma cortada no seu papel — nunca duas comandas emendadas.
-- **Nunca imprime em dobro**: marca `pedidos.impresso_em` no banco (mesmo reiniciando o notebook).
+- **Nunca imprime em dobro**: marca `pedidos.impresso_em` no banco (mesmo reiniciando o computador).
 - **PIX só imprime depois de conferido** no painel (botão "PIX conferido"), para a cozinha não fazer pedido não pago.
-- Mostra adicionais, observação de cada item, endereço completo, distância, troco e forma de pagamento.
+- **Liga sozinho com o Windows** e religa sozinho se cair.
+- O painel mostra **"Impressora ligada"** (verde) ou **"Impressora desligada"** (vermelho).
 
-## Instalar (uma vez)
+## Instalar (uma vez, no computador da impressora)
 
-1. Instale o **Node.js LTS** (https://nodejs.org) no notebook.
-2. Copie esta pasta `impressora` para o notebook (ex.: `C:\AdrianoImpressora`).
-3. Copie `config.example.json` para `config.json` e preencha:
-   - `senha`: `ADL#` + o PIN do painel (ex.: PIN 1234 → `ADL#1234`).
-   - `printerName`: nome exato da impressora como aparece no Windows (vazio = impressora padrão).
-4. Se o programa antigo de impressão estiver instalado, **desative-o** (senão sai em dobro):
-   Agendador de Tarefas → apague a tarefa `Restaurante - Impressao automatica de pedidos`.
-5. Clique com o botão direito em `instalar.ps1` → **Executar com o PowerShell**.
-   Ele instala as dependências e cria a tarefa `Adriano Lanches - Impressao automatica`, que liga junto com o Windows.
-6. Teste: abra o PowerShell na pasta e rode `npm run teste` — devem sair **2 papéis separados**.
+1. Copie a pasta `impressora` para o computador (ex.: `C:\AdrianoImpressora`). Pode ser pelo pen drive ou pelo arquivo `impressora-adriano.zip` (botão direito → Extrair tudo).
+2. Dê **dois cliques em `INSTALAR.cmd`**. Se o Windows avisar, clique em **Mais informações → Executar assim mesmo**.
+3. Responda o que ele perguntar:
+   - **PIN do painel** (o mesmo de entrar no painel);
+   - **número da impressora** térmica na lista;
+   - se as **2 comandas de teste** saíram separadas.
+4. Pronto. Ele instala o que faltar (inclusive o Node.js), desliga o programa antigo e passa a ligar junto com o Windows.
 
-O registro do que aconteceu fica em `monitor.log`.
+Pode rodar o `INSTALAR.cmd` de novo a qualquer momento (trocar a impressora, mudou o PIN, etc.).
 
-## config.json
+## Outros atalhos
+
+| Arquivo | Para que serve |
+|---|---|
+| `TESTAR IMPRESSAO.cmd` | Imprime um pedido de exemplo (2 vias) |
+| `DESINSTALAR.cmd` | Para e tira da inicialização do Windows |
+| `monitor.log` | Registro do que aconteceu (abre no Bloco de Notas) |
+
+## config.json (o instalador preenche)
 
 | Campo | O que é |
 |---|---|
 | `vias` | Quais vias imprimir, na ordem. Padrão `["Cozinha", "Entrega"]`. Só uma: `["Cozinha"]`. |
 | `imprimirPix` | `"conferido"` (padrão) imprime PIX depois do "PIX conferido"; `"na-hora"` imprime assim que entra. |
-| `modo` | `"windows"` (padrão) imprime pelo driver; `"escpos"` manda comando de corte direto para a térmica. |
+| `modo` | `"windows"` (padrão) imprime pelo driver; `"escpos"` manda o comando de corte direto para a térmica. |
 | `lineWidth` | Colunas da comanda: `42` para bobina 80 mm, `32` para 58 mm. |
 | `fonteTamanho` | Tamanho da letra no modo `windows` (padrão 9). |
 
 ## Se as vias saírem sem corte entre elas
 
-1. No Windows: Impressoras → (sua térmica) → Preferências de impressão → procure **"Cortar papel"/"Paper cut"** e escolha **"no fim do documento"** (não "no fim do trabalho"/"desativado").
-2. Se o driver não tiver essa opção, troque `"modo": "escpos"` no `config.json` (funciona com Epson, Elgin, Bematech, Daruma, Tanca e genéricas ESC/POS). Reinicie o notebook ou a tarefa.
+O instalador já tenta o modo `escpos` quando você responde que não saíram separadas. Se mesmo assim não cortar: Impressoras → (sua térmica) → Preferências de impressão → **"Cortar papel"** no **fim do documento**. Depois rode o `TESTAR IMPRESSAO.cmd`.
 
-## Parar / remover
+## O painel mostra "Impressora desligada"
 
-- Parar agora: Agendador de Tarefas → `Adriano Lanches - Impressao automatica` → Finalizar.
-- Remover: botão direito em `desinstalar.ps1` → Executar com o PowerShell.
+O computador do balcão está desligado, sem internet ou o programa foi fechado. Ligue o computador (o programa volta sozinho) ou dê dois cliques no `INSTALAR.cmd` de novo. Passe o mouse no aviso para ver a última vez que ela deu sinal.

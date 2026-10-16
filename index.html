@@ -40,9 +40,8 @@
         <button data-view="loja">Loja</button>
       </nav>
       <div class="bar-right">
-        <div class="modo" id="modo">
-          <button data-modo="auto">Auto</button><button data-modo="aberta">Aberta</button><button data-modo="fechada">Fechada</button>
-        </div>
+        <button class="loja-sw" id="lojaSw" type="button"><i></i><span id="lojaSwTxt">…</span></button>
+        <span class="imp-chip" id="impChip" hidden></span>
         <button class="icon" id="soundBtn" title="Som de novo pedido">🔔</button>
         <button class="icon" id="logoutBtn" title="Sair">⎋</button>
       </div>
@@ -50,6 +49,10 @@
 
     <!-- PEDIDOS -->
     <section class="view" id="view-pedidos">
+      <div class="closed-strip" id="closedStrip" hidden>
+        <span><b>Loja fechada.</b> Os clientes veem o cardápio, mas não conseguem pedir.</span>
+        <button type="button" id="abrirLojaBtn">Abrir loja</button>
+      </div>
       <div class="stats">
         <div class="stat"><span>Faturamento</span><b id="stFat">R$ 0</b></div>
         <div class="stat"><span>Pedidos</span><b id="stQtd">0</b></div>

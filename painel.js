@@ -54,6 +54,7 @@ async function enter() {
   LOJA = loja;
   $('login').hidden = true; $('app').hidden = false;
   renderModo();
+  checarImpressora(); setInterval(checarImpressora, 60000);
   await loadPedidos();
   subscribe();
   initAdmin();
@@ -69,14 +70,37 @@ document.querySelectorAll('.bar-tabs button').forEach(b => b.onclick = () => {
 });
 
 // ── Modo da loja ───────────────────────────────────────────
-function renderModo() { document.querySelectorAll('#modo button').forEach(b => b.classList.toggle('on', b.dataset.modo === LOJA.modo)); }
-document.querySelectorAll('#modo button').forEach(b => b.onclick = async () => {
-  const modo = b.dataset.modo;
+// Só manual: o dono abre quando começa o expediente e fecha no fim.
+function renderModo() {
+  const aberta = LOJA.modo === 'aberta';
+  $('lojaSw').classList.toggle('on', aberta);
+  $('lojaSwTxt').textContent = aberta ? 'Loja aberta' : 'Loja fechada';
+  $('lojaSw').title = aberta ? 'Toque para fechar a loja' : 'Toque para abrir a loja';
+  $('closedStrip').hidden = aberta;
+}
+async function mudarModo(modo) {
   const { error } = await supa.from('lojas').update({ modo }).eq('id', LOJA.id);
   if (error) return toast('Erro ao mudar: ' + error.message);
   LOJA.modo = modo; renderModo();
-  toast({ auto: 'Abre e fecha sozinha no horário', aberta: 'Loja ABERTA pra pedidos', fechada: 'Loja FECHADA' }[modo]);
-});
+  toast(modo === 'aberta' ? 'Loja ABERTA: já pode receber pedidos' : 'Loja FECHADA: ninguém consegue pedir');
+}
+$('lojaSw').onclick = () => {
+  if (LOJA.modo !== 'aberta') return mudarModo('aberta');
+  if (confirm('Fechar a loja agora? Os clientes não vão conseguir fazer pedido até você abrir de novo.')) mudarModo('fechada');
+};
+$('abrirLojaBtn').onclick = () => mudarModo('aberta');
+
+// ── Impressora automática (sinal de vida a cada minuto) ──
+async function checarImpressora() {
+  const { data } = await supa.from('impressora_status').select('visto_em, impressora, erro').eq('loja_id', LOJA.id).maybeSingle();
+  const chip = $('impChip');
+  if (!data) { chip.hidden = true; return; } // nunca instalada
+  const ligada = Date.now() - Date.parse(data.visto_em) < 3 * 60e3;
+  chip.hidden = false;
+  chip.className = 'imp-chip ' + (!ligada ? 'off' : data.erro ? 'warn' : 'on');
+  chip.textContent = !ligada ? 'Impressora desligada' : data.erro ? 'Impressora com erro' : 'Impressora ligada';
+  chip.title = !ligada ? `Último sinal ${ago(data.visto_em)}. Confira se o notebook do balcão está ligado e com internet.` : data.erro ? data.erro : (data.impressora || '');
+}
 
 // ── Pedidos ────────────────────────────────────────────────
 function periodStart(p) {

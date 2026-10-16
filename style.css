@@ -39,11 +39,13 @@ input, select, textarea { font: inherit; color: inherit; }
 .bar-tabs b { position: absolute; top: 2px; right: 0; min-width: 20px; height: 20px; border-radius: 10px; background: var(--yellow); color: var(--ink); font-family: var(--f-body); font-size: .72rem; display: grid; place-items: center; padding: 0 5px; animation: pulse 1.2s infinite; }
 @keyframes pulse { 50% { transform: scale(1.18); } }
 .bar-right { margin-left: auto; display: flex; align-items: center; gap: 10px; }
-.modo { display: flex; background: var(--board-2); border-radius: 12px; padding: 3px; }
-.modo button { padding: 8px 12px; border-radius: 9px; font-weight: 700; font-size: .82rem; color: var(--ink-3); }
-.modo button.on[data-modo="aberta"] { background: var(--green); color: #fff; }
-.modo button.on[data-modo="fechada"] { background: var(--red); color: #fff; }
-.modo button.on[data-modo="auto"] { background: var(--yellow); color: var(--ink); }
+.loja-sw { display: flex; align-items: center; gap: 9px; padding: 9px 16px 9px 12px; border-radius: 999px; background: var(--red); color: #fff; font-weight: 800; font-size: .9rem; letter-spacing: .01em; border: 2px solid rgba(255,255,255,.18); }
+.loja-sw i { width: 30px; height: 18px; border-radius: 999px; background: rgba(0,0,0,.35); position: relative; transition: background .2s; }
+.loja-sw i::after { content: ''; position: absolute; top: 2px; left: 2px; width: 14px; height: 14px; border-radius: 50%; background: #fff; transition: transform .2s; }
+.loja-sw.on { background: var(--green); }
+.loja-sw.on i::after { transform: translateX(12px); }
+.closed-strip { display: flex; align-items: center; justify-content: space-between; gap: 14px; flex-wrap: wrap; background: var(--red); color: #fff; border-radius: 14px; padding: 12px 14px 12px 18px; margin-bottom: 14px; border: 2px solid var(--ink); }
+.closed-strip button { background: #fff; color: var(--red-deep); font-weight: 900; border-radius: 10px; padding: 10px 18px; border: 2px solid var(--ink); font-size: .95rem; }
 .icon { width: 40px; height: 40px; border-radius: 12px; background: var(--board-2); font-size: 1.1rem; }
 .icon.off { opacity: .4; }
 
@@ -226,3 +228,10 @@ input, select, textarea { font: inherit; color: inherit; }
   #printArea .obs { padding-left: 14px; font-weight: 700; }
   #printArea .big { font-size: 16px; font-weight: 700; }
 }
+
+/* impressora automática */
+.imp-chip { display: inline-flex; align-items: center; gap: 7px; padding: 7px 12px; border-radius: 999px; font-size: .78rem; font-weight: 800; background: var(--board-2); color: #fff; white-space: nowrap; }
+.imp-chip::before { content: ''; width: 8px; height: 8px; border-radius: 50%; background: currentColor; }
+.imp-chip.on { color: #5BE38C; }
+.imp-chip.warn { color: var(--yellow); }
+.imp-chip.off { color: #fff; background: var(--red); }
